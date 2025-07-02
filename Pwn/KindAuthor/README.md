@@ -38,10 +38,6 @@ $ checksec KindAuthor
 
 ---
 
-Here’s the customized **Static Analysis (IDA pro)** section for your **KindAuthor** (ret2libc) task:
-
----
-
 ## Static Analysis (IDA pro)
 
 ### Vulnerable Code
@@ -79,10 +75,6 @@ int main(int argc, const char **argv, const char **envp) {
   - Leak a libc address (e.g., via `puts@plt`).
   - Calculate the **libc base**.
   - Use `system("/bin/sh")` to spawn a shell and get the flag.
-
----
-
-This concise analysis highlights the overflow vulnerability and sets the stage for a ret2libc attack.
 
 ---
 
@@ -247,9 +239,12 @@ log.success(f"FLAG : {flag.decode()}")
 
 ## Vulnerability Summary
 
-- The binary **leaks a code address** (`predict_outcome`) on startup, allowing us to **calculate the binary base address**.
-- The **"Neural Intervention"** feature provides an **arbitrary write primitive** via user-controlled memory writes.
-- By overwriting the **GOT entry of `exit()`** with the address of `unlock_secret_research_data()`, we can redirect execution and spawn a shell.
+- The `func()` function contains a **buffer overflow**, reading 128 bytes into a 32-byte buffer.
+- This enables the attacker to **overwrite the return address** and hijack control flow.
+- The vulnerability allows for a **ret2libc attack**, where we:
+
+  - Leak a libc address (e.g., `puts@got`) to calculate the **libc base**.
+  - Use this to call `system("/bin/sh")` and spawn a shell.
 
 ---
 
