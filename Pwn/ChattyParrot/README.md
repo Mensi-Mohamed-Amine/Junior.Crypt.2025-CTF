@@ -172,14 +172,6 @@ log.success(f"FLAG : {flag.decode()}")
 
 ## Vulnerability Summary
 
-| Protection   | Status      |
-| ------------ | ----------- |
-| RELRO        | Full RELRO  |
-| Stack Canary | Not Present |
-| NX           | Enabled     |
-| PIE          | Enabled     |
-| Stripped     | No          |
-
 - **Format string vulnerability** allows leaking memory using `%p` and `%s`.
 - The leaked memory provides the **address of the `FLAG_VAL` environment variable**.
 - By reading the leaked address, we can **extract the flag**.
