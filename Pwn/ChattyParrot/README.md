@@ -25,19 +25,13 @@ The `ChattyParrot` binary contains a **format string vulnerability** in the `vul
 ## Binary Information
 
 ```bash
-
 $ file ChattyParrot
-
 ```
 
 ![Alt text](img/2.png)
 
 ```bash
-
 $ checksec main
-
-
-
 ```
 
 ![Alt text](img/3.png)
