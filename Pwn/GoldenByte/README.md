@@ -52,6 +52,8 @@ if (v4 == 3202416105)
 
 ![Alt text](img/5.png)
 
+![Alt text](img/6.png)
+
 - The `main()` function prompts the user for a lottery ticket number and stores the input in the variable `v4`.
 - The input is compared to the correct ticket number (`3202416105`).
 - If the input matches the correct ticket number, the program calls the `jackpot()` function.
@@ -148,7 +150,7 @@ log.success(f"FLAG : {flag}")
 
 ## Exploit Output
 
-![Alt text](img/6.png)
+![Alt text](img/7.png)
 
 ---
 
