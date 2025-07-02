@@ -40,56 +40,47 @@ $ checksec NeuralNet
 
 ## Static Analysis (IDA pro)
 
-### Vulnerable Code
+### Key Functionality
 
 ```c
-int func()
-{
-  char buf[32]; // [rsp+0h] [rbp-20h] BYREF
+printf("Prediction module address (predict_outcome): %p\n", predict_outcome);
+```
 
-  printf("%s", "Input username:");
-  read(0, buf, 0x80uLL);
-  return printf("Your name is %s", buf);
+[Alt text](img/4.png)
+
+- The program prints the address of `predict_outcome`, which leaks a code pointer and allows calculation of the **binary base address**.
+
+```c
+scanf("%lx", &v5);
+scanf("%lx", &v4);
+*v5 = v4;  // Arbitrary write
+```
+
+[Alt text](img/5.png)
+
+- Option 3 ("Neural Intervention") allows the user to write any 64-bit value to any memory address, creating an **arbitrary write primitive**.
+
+```c
+if (v3 == 4) {
+    exit(0);
 }
 ```
 
-![Alt text](img/4.png)
+[Alt text](img/6.png)
 
-- The `func()` function reads 128 bytes of input into the 32-byte buffer `buf`, causing a **buffer overflow**.
-- This allows control over the **return address**, enabling the attacker to redirect execution to the `win()` function.
+- Choosing option 4 calls `exit()`. If the GOT entry of `exit()` is overwritten with a custom function like `unlock_secret_research_data()`, it will be executed.
 
-### `win()` Function
+### Hidden Function
 
 ```c
-int win()
-{
-  int result; // eax
-  const char *s; // [rsp+8h] [rbp-8h]
-
-  s = getenv("FLAG_VAL");
-  result = first;
-  if ( first )
-  {
-    result = second;
-    if ( second )
-      return puts(s);
-  }
-  return result;
+int unlock_secret_research_data() {
+    return system("/bin/sh");
 }
 ```
 
-![Alt text](img/5.png)
+[Alt text](img/7.png)
 
-- The `win()` function requires both `first` and `second` to be set to `1` to print the flag.
-
-### `step1()` and `step2()` Functions
-
-```c
-void step1() { first = 1; }
-void step2() { second = 1; }
-```
-
-- The attacker can call `step1()` and `step2()` by exploiting the buffer overflow to trigger the flag print in `win()`.
+- This hidden function spawns a shell and is not reachable during normal execution. Triggering it requires **overwriting `exit@GOT`** to point to it.
 
 ---
 
