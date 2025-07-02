@@ -36,8 +36,6 @@ $ checksec main
 
 ---
 
----
-
 ## Static Analysis (IDA pro)
 
 ```c
@@ -58,10 +56,6 @@ if (v4 == 3202416105)
 - The input is compared to the correct ticket number (`3202416105`).
 - If the input matches the correct ticket number, the program calls the `jackpot()` function.
 - In the `jackpot()` function, the flag stored in the `FLAG_VAL` environment variable is printed using `puts(s)`.
-
----
-
-This version describes the static analysis for the **GoldenByte** task, focusing on the ticket comparison and the flag leak in `jackpot()`.
 
 ---
 
