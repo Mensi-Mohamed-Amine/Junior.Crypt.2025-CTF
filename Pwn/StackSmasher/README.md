@@ -43,22 +43,38 @@ $ checksec StackSmasher
 ### Vulnerable Code
 
 ```c
-printf("%s", "Input your phrase:");
-printf(buf);  // Format string vulnerability
+printf("Input username:");
+read(0, buf, 0x80uLL);  // Input is read into buf
 ```
 
-![Alt text](img/4.png)
+![Vulnerable Code](img/4.png)
 
 ```c
-read(0, buf, 0x100uLL);  // User input is read into buffer
+return printf("Your name is %s", buf);  // Printed input
 ```
 
-![Alt text](img/5.png)
+![Buffer Code](img/5.png)
 
-- The `main()` function retrieves the `FLAG_VAL` environment variable and copies it into `SECRET`.
-- It then prompts the user for input and calls `vuln()`.
-- In `vuln()`, 256 bytes are read into `buf` using `read(0, buf, 0x100)`.
-- The input is then passed directly to `printf(buf)`, causing a format string vulnerability.
+- The `func()` function reads 128 bytes of input into the 32-byte buffer `buf`, causing a **buffer overflow**.
+- This allows control over the **return address**, enabling the attacker to redirect execution to the `win()` function.
+
+### `win()` Function
+
+```c
+if (first && second)
+    return puts(s);  // Prints the flag
+```
+
+- The `win()` function requires both `first` and `second` to be set to `1` to print the flag.
+
+### `step1()` and `step2()` Functions
+
+```c
+void step1() { first = 1; }
+void step2() { second = 1; }
+```
+
+- The attacker can call `step1()` and `step2()` by exploiting the buffer overflow to trigger the flag print in `win()`.
 
 ---
 
