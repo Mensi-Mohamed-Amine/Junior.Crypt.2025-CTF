@@ -86,20 +86,19 @@ int unlock_secret_research_data() {
 
 ## Exploit Strategy
 
-### Step 1: Overflow the Buffer
+### Step 1: Leak the Binary Base Address
 
-We exploit the buffer overflow by sending input larger than 32 bytes, overwriting the **return address** and controlling the **RIP** to redirect execution to the `win()` function.
+At startup, the program prints the address of the `predict_outcome` function.
+We use this leak to calculate the **base address** of the binary.
 
-### Step 2: Call `step1()` and `step2()`
+### Step 2: Overwrite `exit@GOT`
 
-After redirecting execution to `win()`, we must:
+Using the "Neural Intervention" option (option 3), we perform an **arbitrary write** to overwrite the **GOT entry for `exit()`** with the address of the hidden `unlock_secret_research_data()` function.
 
-- Call `step1()` to set `first = 1`.
-- Call `step2()` to set `second = 1`.
+### Step 3: Trigger the Payload
 
-### Step 3: Trigger the Flag
-
-Once both `first` and `second` are set, the `win()` function will print the flag stored in the `FLAG_VAL` environment variable.
+We select menu option 4 (Exit), which causes the program to call `exit()`.
+Because we overwrote its GOT entry, control is redirected to `unlock_secret_research_data()`, which executes `system("/bin/sh")`.
 
 ---
 
