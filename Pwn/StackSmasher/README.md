@@ -1,4 +1,4 @@
-# ChattyParrot - Writeup
+# StackSmasher - Writeup
 
 ---
 
