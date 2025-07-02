@@ -18,9 +18,9 @@ This demo shows the exploitation flow:
 
 ## Challenge Summary
 
-The Neural Net Simulator binary provides a menu-driven interface with several functions, including a debug option that allows arbitrary memory writes by letting the user overwrite a "neuron" address with a new value. The program leaks the address of the predict_outcome function at startup, enabling us to calculate the base address of the binary.
+The KindAuthor binary contains a classic buffer overflow vulnerability in the func() function, where 128 bytes of input are read into a 32-byte buffer without bounds checking. This allows an attacker to overwrite the return address and hijack control flow.
 
-The exploit involves using this leak to compute the binary’s base address and then overwriting the exit() entry in the Global Offset Table (GOT) with the address of the hidden unlock_secret_research_data() function. By selecting option 4 (Exit), the program will call this overwritten GOT entry, granting shell access via system("/bin/sh").
+The goal is to exploit this vulnerability to perform a ret2libc attack: by overwriting the return address with a crafted payload, we can call standard libc functions (e.g., system("/bin/sh")) to spawn a shell and retrieve the flag. No PIE is involved, so addresses of functions like puts or read can be used directly or leaked to resolve the libc base.
 
 ## Binary Information
 
