@@ -18,9 +18,7 @@ This demo shows the exploitation flow:
 
 ## Challenge Summary
 
-The `ChattyParrot` binary contains a **format string vulnerability** in the `vuln()` function, where user input is passed to `printf()` without a format specifier. By using `%p` and `%s`, an attacker can **leak memory** and extract the flag stored in the `FLAG_VAL` environment variable. The goal is to craft input that reveals the flag by exploiting this vulnerability.
-
----
+## The GoldenByte binary contains a simple lottery system where the user is prompted to enter a ticket number. If the number matches the correct value (3202416105), the jackpot() function is called, which prints the flag stored in the FLAG_VAL environment variable. The challenge involves performing static analysis of the code to determine the correct lottery ticket number and gain access to the flag. No advanced exploitation is required, just the correct input based on the analysis.
 
 ## Binary Information
 
@@ -38,27 +36,32 @@ $ checksec main
 
 ---
 
+---
+
 ## Static Analysis (IDA pro)
 
-### Vulnerable Code
-
 ```c
-printf("%s", "Input your phrase:");
-printf(buf);  // Format string vulnerability
+printf("Ready to test your luck? Enter your lottery ticket number: > ");
+__isoc99_scanf("%d", &v4);  // User input is read into v4
 ```
 
 ![Alt text](img/4.png)
 
 ```c
-read(0, buf, 0x100uLL);  // User input is read into buffer
+if (v4 == 3202416105)
+    jackpot();  // Correct input triggers jackpot()
 ```
 
 ![Alt text](img/5.png)
 
-- The `main()` function retrieves the `FLAG_VAL` environment variable and copies it into `SECRET`.
-- It then prompts the user for input and calls `vuln()`.
-- In `vuln()`, 256 bytes are read into `buf` using `read(0, buf, 0x100)`.
-- The input is then passed directly to `printf(buf)`, causing a format string vulnerability.
+- The `main()` function prompts the user for a lottery ticket number and stores the input in the variable `v4`.
+- The input is compared to the correct ticket number (`3202416105`).
+- If the input matches the correct ticket number, the program calls the `jackpot()` function.
+- In the `jackpot()` function, the flag stored in the `FLAG_VAL` environment variable is printed using `puts(s)`.
+
+---
+
+This version describes the static analysis for the **GoldenByte** task, focusing on the ticket comparison and the flag leak in `jackpot()`.
 
 ---
 
@@ -84,11 +87,11 @@ Using the leaked memory addresses, we can:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # This exploit template was generated via:
-# $ pwn template --host ctf.mf.grsu.by --port 9077
+# $ pwn template GoldenByte --host ctf.mf.grsu.by --port 9074
 from pwn import *
 
 # Set up pwntools for the correct architecture
-exe = context.binary = ELF(args.EXE or 'ChattyParrot')
+exe = context.binary = ELF(args.EXE or 'GoldenByte')
 
 # Many built-in settings can be controlled on the command-line and show up
 # in "args".  For example, to dump all data sent/received, and disable ASLR
@@ -96,7 +99,7 @@ exe = context.binary = ELF(args.EXE or 'ChattyParrot')
 # ./exploit.py DEBUG NOASLR
 # ./exploit.py GDB HOST=example.com PORT=4141 EXE=/tmp/executable
 host = args.HOST or 'ctf.mf.grsu.by'
-port = int(args.PORT or 9077)
+port = int(args.PORT or 9074)
 
 env_vars = {'FLAG_VAL': 'grodno{dummy_flag}'}
 
@@ -105,7 +108,7 @@ def start_local(argv=[], *a, **kw):
     if args.GDB:
         return gdb.debug([exe.path] + argv, gdbscript=gdbscript, *a, **kw)
     else:
-        return process([exe.path] + argv, env = env_vars ,*a, **kw)
+        return process([exe.path] + argv, env = env_vars, *a, **kw)
 
 def start_remote(argv=[], *a, **kw):
     '''Connect to the process on the remote host'''
@@ -136,7 +139,7 @@ continue
 # RELRO:      Partial RELRO
 # Stack:      No canary found
 # NX:         NX enabled
-# PIE:        No PIE (0x400000)
+# PIE:        PIE enabled
 # Stripped:   No
 
 io = start()
@@ -150,12 +153,13 @@ io = start()
 # flag = io.recv(...)
 # log.success(flag)
 
-payload = b'%41$s'
+payload = b'3202416105'
 io.sendline(payload)
-io.recvuntil(b'Input your phrase:')
-flag = io.recvline().strip(b'"\n')
-log.success(f"FLAG : {flag.decode()}")
+io.recvuntil(b'Checking ticket number -1092551191...')
+io.recvline()
+flag = io.recvline().strip().decode()
 
+log.success(f"FLAG : {flag}")
 
 
 
