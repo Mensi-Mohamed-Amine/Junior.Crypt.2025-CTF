@@ -166,38 +166,28 @@ log.success(f"FLAG : {flag.decode()}")
 
 ## Exploit Output
 
-![Alt text](img/5.png)
+![Alt text](img/6.png)
 
 ---
 
 ## Vulnerability Summary
 
-| Protection   | Status      |
-
+| Protection   | Status      |
 | ------------ | ----------- |
-
-| RELRO        | Full RELRO  |
-
+| RELRO        | Full RELRO  |
 | Stack Canary | Not Present |
+| NX           | Enabled     |
+| PIE          | Enabled     |
+| Stripped     | No          |
 
-| NX           | Enabled     |
-
-| PIE          | Enabled     |
-
-| Stripped     | No          |
-
-- Format string vulnerability enables arbitrary write
-
-- ROP used to leak libc and execute a syscall chain
-
-- Final payload uses ret2libc to run `/bin/sh`
+- **Format string vulnerability** allows leaking memory using `%p` and `%s`.
+- The leaked memory provides the **address of the `FLAG_VAL` environment variable**.
+- By reading the leaked address, we can **extract the flag**.
 
 ---
 
 ## Flag
 
 ```
-
-RedPointer{FhoijKey_Not_Encrypted_flag_afagsgijq}
-
+grodno{J35KiI_P4RR07_Drug_M47u3}
 ```
