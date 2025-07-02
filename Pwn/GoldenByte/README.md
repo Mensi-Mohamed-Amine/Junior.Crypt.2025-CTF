@@ -18,7 +18,7 @@ This demo shows the exploitation flow:
 
 ## Challenge Summary
 
-## The GoldenByte binary contains a simple lottery system where the user is prompted to enter a ticket number. If the number matches the correct value (3202416105), the jackpot() function is called, which prints the flag stored in the FLAG_VAL environment variable. The challenge involves performing static analysis of the code to determine the correct lottery ticket number and gain access to the flag. No advanced exploitation is required, just the correct input based on the analysis.
+The GoldenByte binary contains a simple lottery system where the user is prompted to enter a ticket number. If the number matches the correct value (3202416105), the jackpot() function is called, which prints the flag stored in the FLAG_VAL environment variable. The challenge involves performing static analysis of the code to determine the correct lottery ticket number and gain access to the flag. No advanced exploitation is required, just the correct input based on the analysis.
 
 ## Binary Information
 
