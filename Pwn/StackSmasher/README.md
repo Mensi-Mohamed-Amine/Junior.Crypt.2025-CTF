@@ -20,7 +20,7 @@ This demo shows the exploitation flow:
 
 The StackSmasher binary contains a buffer overflow vulnerability in the func() function, where user input is read into a 32-byte buffer, but 128 bytes are allowed. This allows an attacker to smash the stack and control the program's execution. The goal is to exploit this vulnerability to call the win() function, which prints the flag stored in the FLAG_VAL environment variable.
 
-## To achieve this, we must bypass the checks in the win() function by calling step1 and step2 in the right order to make the condition true and trigger the flag output.
+To achieve this, we must bypass the checks in the win() function by calling step1 and step2 in the right order to make the condition true and trigger the flag output.
 
 ## Binary Information
 
