@@ -43,17 +43,17 @@ $ checksec StackSmasher
 ### Vulnerable Code
 
 ```c
-printf("Input username:");
-read(0, buf, 0x80uLL);  // Input is read into buf
+int func()
+{
+  char buf[32]; // [rsp+0h] [rbp-20h] BYREF
+
+  printf("%s", "Input username:");
+  read(0, buf, 0x80uLL);
+  return printf("Your name is %s", buf);
+}
 ```
 
-![Vulnerable Code](img/4.png)
-
-```c
-return printf("Your name is %s", buf);  // Printed input
-```
-
-![Buffer Code](img/5.png)
+![Alt text](img/4.png)
 
 - The `func()` function reads 128 bytes of input into the 32-byte buffer `buf`, causing a **buffer overflow**.
 - This allows control over the **return address**, enabling the attacker to redirect execution to the `win()` function.
@@ -61,9 +61,24 @@ return printf("Your name is %s", buf);  // Printed input
 ### `win()` Function
 
 ```c
-if (first && second)
-    return puts(s);  // Prints the flag
+int win()
+{
+  int result; // eax
+  const char *s; // [rsp+8h] [rbp-8h]
+
+  s = getenv("FLAG_VAL");
+  result = first;
+  if ( first )
+  {
+    result = second;
+    if ( second )
+      return puts(s);
+  }
+  return result;
+}
 ```
+
+![Alt text](img/5.png)
 
 - The `win()` function requires both `first` and `second` to be set to `1` to print the flag.
 
