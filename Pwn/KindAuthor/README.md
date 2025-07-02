@@ -25,13 +25,13 @@ The goal is to exploit this vulnerability to perform a ret2libc attack: by overw
 ## Binary Information
 
 ```bash
-$ file NeuralNet
+$ file KindAuthor
 ```
 
 ![Alt text](img/2.png)
 
 ```bash
-$ checksec NeuralNet
+$ checksec KindAuthor
 ```
 
 ![Alt text](img/3.png)
