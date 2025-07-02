@@ -155,5 +155,5 @@ log.success(f"FLAG : {flag}")
 ## Flag
 
 ```
-grodno{J35KiI_P4RR07_Drug_M47u3}
+grodno{D4dy4_m4TV31_Pr019r4l_kV4rT1RY_V_K421n0_V3D_n3_2N4L_PWN}
 ```
