@@ -59,22 +59,6 @@ if (v4 == 3202416105)
 
 ---
 
-## Exploit Strategy
-
-### Step 1: Leak Memory Address
-
-We exploit the format string vulnerability by sending a payload containing `%p` and `%s` to leak memory addresses. This allows us to:
-
-- Leak the address of the `FLAG_VAL` environment variable.
-
-### Step 2: Extract the Flag
-
-Using the leaked memory addresses, we can:
-
-- Access the **value of `FLAG_VAL`** by reading the content at the leaked address, which contains the flag.
-
----
-
 ## Exploit Code
 
 ```python
@@ -165,14 +149,6 @@ log.success(f"FLAG : {flag}")
 ## Exploit Output
 
 ![Alt text](img/6.png)
-
----
-
-## Vulnerability Summary
-
-- **Format string vulnerability** allows leaking memory using `%p` and `%s`.
-- The leaked memory provides the **address of the `FLAG_VAL` environment variable**.
-- By reading the leaked address, we can **extract the flag**.
 
 ---
 
