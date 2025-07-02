@@ -42,39 +42,27 @@ $ checksec main
 
 ![Alt text](img/3.png)
 
+---
+
 ## Static Analysis (IDA pro)
 
 ### Vulnerable Code
 
 ```c
-
-printf(">> Welcome Commander: ");
-
-printf(buf);  // Format string vulnerability
-
+printf("%s", "Input your phrase:");
+printf(buf);  // Format string vulnerability
 ```
 
-![Alt text](img/3.png)
-
 ```c
-
-read(0, v5, 0xC8uLL);  // Buffer overflow vulnerability
-
+read(0, buf, 0x100uLL);  // User input is read into buffer
 ```
 
 ![Alt text](img/4.png)
 
-- The first vulnerability occurs at `printf(buf)`, where user input is printed without a format specifier. This leads to a **format string vulnerability**, allowing an attacker to **leak memory** and **perform arbitrary writes** using `%n`.
-
-- The buffer `buf[208]` receives input via `read(0, buf, 0xC8)`, giving ample space for format string payloads.
-
-- The second vulnerability lies in the use of `read(0, v5, 0xC8)` where `v5` is only an 80-byte buffer. Since `0xC8` is 200 bytes, this introduces a **classic stack-based buffer overflow**, allowing overwriting of saved registers and return addresses.
-
-- This overflow enables a **ROP chain**, which becomes crucial after leaking libc via the format string attack.
-
-- The binary has **NX (Non-Executable Stack)** enabled, preventing code injection, but **does not use a stack canary**, so stack smashing is possible.
-
-- Since **PIE (Position Independent Executable)** is enabled, we must first **leak an address** to calculate the base address of the binary before launching any reliable attack.
+- The `main()` function retrieves the `FLAG_VAL` environment variable and copies it into `SECRET`.
+- It then prompts the user for input and calls `vuln()`.
+- In `vuln()`, 256 bytes are read into `buf` using `read(0, buf, 0x100)`.
+- The input is then passed directly to `printf(buf)`, causing a format string vulnerability.
 
 ---
 
