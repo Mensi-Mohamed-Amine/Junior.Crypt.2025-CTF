@@ -46,7 +46,7 @@ $ checksec NeuralNet
 printf("Prediction module address (predict_outcome): %p\n", predict_outcome);
 ```
 
-[Alt text](img/4.png)
+![Alt text](img/4.png)
 
 - The program prints the address of `predict_outcome`, which leaks a code pointer and allows calculation of the **binary base address**.
 
@@ -56,7 +56,7 @@ scanf("%lx", &v4);
 *v5 = v4;  // Arbitrary write
 ```
 
-[Alt text](img/5.png)
+![Alt text](img/5.png)
 
 - Option 3 ("Neural Intervention") allows the user to write any 64-bit value to any memory address, creating an **arbitrary write primitive**.
 
@@ -66,7 +66,7 @@ if (v3 == 4) {
 }
 ```
 
-[Alt text](img/6.png)
+![Alt text](img/6.png)
 
 - Choosing option 4 calls `exit()`. If the GOT entry of `exit()` is overwritten with a custom function like `unlock_secret_research_data()`, it will be executed.
 
@@ -78,7 +78,7 @@ int unlock_secret_research_data() {
 }
 ```
 
-[Alt text](img/7.png)
+![Alt text](img/7.png)
 
 - This hidden function spawns a shell and is not reachable during normal execution. Triggering it requires **overwriting `exit@GOT`** to point to it.
 
