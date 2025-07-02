@@ -18,20 +18,20 @@ This demo shows the exploitation flow:
 
 ## Challenge Summary
 
-The StackSmasher binary contains a buffer overflow vulnerability in the func() function, where user input is read into a 32-byte buffer, but 128 bytes are allowed. This allows an attacker to smash the stack and control the program's execution. The goal is to exploit this vulnerability to call the win() function, which prints the flag stored in the FLAG_VAL environment variable.
+The Neural Net Simulator binary provides a menu-driven interface with several functions, including a debug option that allows arbitrary memory writes by letting the user overwrite a "neuron" address with a new value. The program leaks the address of the predict_outcome function at startup, enabling us to calculate the base address of the binary.
 
-To achieve this, we must bypass the checks in the win() function by calling step1 and step2 in the right order to make the condition true and trigger the flag output.
+The exploit involves using this leak to compute the binary’s base address and then overwriting the exit() entry in the Global Offset Table (GOT) with the address of the hidden unlock_secret_research_data() function. By selecting option 4 (Exit), the program will call this overwritten GOT entry, granting shell access via system("/bin/sh").
 
 ## Binary Information
 
 ```bash
-$ file StackSmasher
+$ file NeuralNet
 ```
 
 ![Alt text](img/2.png)
 
 ```bash
-$ checksec StackSmasher
+$ checksec NeuralNet
 ```
 
 ![Alt text](img/3.png)
