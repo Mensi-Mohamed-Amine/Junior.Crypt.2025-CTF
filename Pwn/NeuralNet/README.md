@@ -216,9 +216,9 @@ log.success(f"FLAG : {flag.decode()}")
 
 ## Vulnerability Summary
 
-- **Format string vulnerability** allows leaking memory using `%p` and `%s`.
-- The leaked memory provides the **address of the `FLAG_VAL` environment variable**.
-- By reading the leaked address, we can **extract the flag**.
+- The binary **leaks a code address** (`predict_outcome`) on startup, allowing us to **calculate the binary base address**.
+- The **"Neural Intervention"** feature provides an **arbitrary write primitive** via user-controlled memory writes.
+- By overwriting the **GOT entry of `exit()`** with the address of `unlock_secret_research_data()`, we can redirect execution and spawn a shell.
 
 ---
 
