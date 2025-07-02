@@ -218,5 +218,5 @@ log.success(f"FLAG : {flag.decode()}")
 ## Flag
 
 ```
-grodno{J35KiI_P4RR07_Drug_M47u3}
+grodno{unCL3_M47V3y_w45_h3R3_w17H_0ld_5Ch00L_3xPL017}
 ```
