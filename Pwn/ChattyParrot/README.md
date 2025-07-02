@@ -47,11 +47,13 @@ printf("%s", "Input your phrase:");
 printf(buf);  // Format string vulnerability
 ```
 
+![Alt text](img/4.png)
+
 ```c
 read(0, buf, 0x100uLL);  // User input is read into buffer
 ```
 
-![Alt text](img/4.png)
+![Alt text](img/5.png)
 
 - The `main()` function retrieves the `FLAG_VAL` environment variable and copies it into `SECRET`.
 - It then prompts the user for input and calls `vuln()`.
